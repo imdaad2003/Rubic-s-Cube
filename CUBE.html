@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rubik's Cube Solver</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      margin-top: 0;
+    }
+    button {
+      background-color: #ffffff;
+      color: #007acc;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+    }
+    button:hover {
+      background-color: #007acc;
+      color: #fff;
+    }
+    #cubeDisplay {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 30px;
+      gap: 10px;
+    }
+    .face-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .face-label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #fefefe;
+    }
+    .face {
+      display: grid;
+      grid-template-columns: repeat(3, 40px);
+      grid-template-rows: repeat(3, 40px);
+      gap: 2px;
+      background-color: #111;
+      padding: 5px;
+      border-radius: 5px;
+    }
+    .tile {
+      width: 40px;
+      height: 40px;
+      border-radius: 3px;
+      border: 1px solid #333;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 14px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rubik's Cube Solver</h1>
+  <p>Scramble and watch the cube solve itself step-by-step!</p>
+  <button onclick="scrambleAndSolve()">Scramble & Solve</button>
+
+  <div id="cubeDisplay"></div>
+
+  <footer>
+    &copy; 2025 Rubik Solver by Imdaad | Demo version
+  </footer>
+
+  <script>
+    class Cube {
+      constructor() {
+        this.faces = {
+          U: Array(9).fill('w'),
+          D: Array(9).fill('y'),
+          L: Array(9).fill('o'),
+          R: Array(9).fill('r'),
+          F: Array(9).fill('g'),
+          B: Array(9).fill('b')
+        };
+        this.moves = [];
+      }
+
+      rotateFace(face, clockwise = true) {
+        const map = clockwise ? [6,3,0,7,4,1,8,5,2] : [2,5,8,1,4,7,0,3,6];
+        const newFace = [];
+        for (let i = 0; i < 9; i++) newFace[i] = this.faces[face][map[i]];
+        this.faces[face] = newFace;
+        this.moves.push(face + (clockwise ? "" : "'"));
+      }
+
+      rotate(face) {
+        this.rotateFace(face, true);
+        this.updateSides(face);
+        this.display();
+      }
+
+      updateSides(face) {
+        if (face === 'F') {
+          const { U, D, L, R } = this.faces;
+          const temp = [U[6], U[7], U[8]];
+          [U[6], U[7], U[8]] = [L[8], L[5], L[2]];
+          [L[2], L[5], L[8]] = [D[2], D[1], D[0]];
+          [D[0], D[1], D[2]] = [R[0], R[3], R[6]];
+          [R[0], R[3], R[6]] = temp;
+        }
+      }
+
+      scramble(moves = 8) {
+        const possible = ['F', 'U', 'R', 'L', 'B', 'D'];
+        for (let i = 0; i < moves; i++) {
+          const move = possible[Math.floor(Math.random() * 6)];
+          this.rotate(move);
+        }
+      }
+
+      solve() {
+        const interval = setInterval(() => {
+          if (this.moves.length === 0) {
+            clearInterval(interval);
+            return;
+          }
+          const move = this.moves.pop();
+          const base = move[0];
+          const prime = move.includes("'");
+          this.rotateFace(base, !prime);
+          this.display();
+        }, 500);
+      }
+
+      display() {
+        const colors = {
+          w: 'white',
+          y: 'yellow',
+          r: 'red',
+          o: 'orange',
+          g: 'green',
+          b: 'blue'
+        };
+
+        const container = document.getElementById('cubeDisplay');
+        container.innerHTML = '';
+
+        for (let face in this.faces) {
+          const faceContainer = document.createElement('div');
+          faceContainer.className = 'face-container';
+
+          const label = document.createElement('div');
+          label.className = 'face-label';
+          label.innerText = face;
+
+          const grid = document.createElement('div');
+          grid.className = 'face';
+
+          this.faces[face].forEach(c => {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.style.backgroundColor = colors[c];
+            grid.appendChild(tile);
+          });
+
+          faceContainer.appendChild(label);
+          faceContainer.appendChild(grid);
+          container.appendChild(faceContainer);
+        }
+      }
+    }
+
+    function scrambleAndSolve() {
+      const cube = new Cube();
+      cube.display();
+      cube.scramble();
+      setTimeout(() => cube.solve(), 1500);
+    }
+  </script>
+</body>
+</html>
